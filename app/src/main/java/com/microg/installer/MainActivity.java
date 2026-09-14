@@ -1,9 +1,8 @@
-package com.example.microginstaller;
+package com.microg.installer;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -11,7 +10,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,8 +25,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -72,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                     requestInstallPermission();
                 }
             } else {
-                Toast.makeText(this, R.string.no_file_selected, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.no_file, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -82,13 +78,14 @@ public class MainActivity extends AppCompatActivity {
             return Environment.isExternalStorageManager();
         } else {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == 
-                   android.content.pm.PackageManager.PERMISSION_GRANTED;
+                   PackageManager.PERMISSION_GRANTED;
         }
     }
 
     private void requestStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+            intent.setData(Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, REQUEST_CODE_STORAGE_PERMISSION);
         } else {
             ActivityCompat.requestPermissions(this,
@@ -134,18 +131,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } else if (requestCode == REQUEST_CODE_INSTALL_PERMISSION) {
-            if (checkInstallPermission()) {
-                if (selectedFilePath != null) {
-                    installMicroG();
-                }
+            if (checkInstallPermission() && selectedFilePath != null) {
+                installMicroG();
             } else {
-                Toast.makeText(this, R.string.install_permission_denied, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error, "Permission refusée"), Toast.LENGTH_SHORT).show();
             }
         } else if (requestCode == REQUEST_CODE_STORAGE_PERMISSION) {
             if (checkStoragePermission()) {
                 openFileSelector();
             } else {
-                Toast.makeText(this, R.string.storage_permission_denied, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error, "Permission stockage refusée"), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -153,15 +148,13 @@ public class MainActivity extends AppCompatActivity {
     private String getPathFromUri(Uri uri) {
         if (uri.getScheme().equals("file")) {
             return uri.getPath();
-        } else if (uri.getScheme().equals("content")) {
-            return uri.getPath();
         }
-        return null;
+        return uri.toString();
     }
 
     private void installMicroG() {
         if (selectedFilePath == null) {
-            Toast.makeText(this, R.string.no_file_selected, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_file, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -204,14 +197,14 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean success) {
-            statusText.setText(success ? getString(R.string.success) : getString(R.string.error));
+            statusText.setText(success ? getString(R.string.success) : getString(R.string.error, "Erreur d'installation"));
             selectButton.setEnabled(true);
             installButton.setEnabled(selectedFilePath != null);
             
             if (success) {
                 Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(MainActivity.this, R.string.error, Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, getString(R.string.error, "Erreur"), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -256,19 +249,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void installApk(File apkFile) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getPackageManager().canRequestPackageInstalls()) {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(intent);
-            }
-        } else {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     @Override
@@ -276,10 +260,10 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         
         if (requestCode == REQUEST_CODE_STORAGE_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openFileSelector();
             } else {
-                Toast.makeText(this, R.string.storage_permission_denied, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error, "Permission refusée"), Toast.LENGTH_SHORT).show();
             }
         }
     }

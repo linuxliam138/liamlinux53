@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MicroG Installer</string>
+    <string name="select_file">Sélectionner le fichier ZIP microG</string>
     <string name="install_button">Installer microG</string>
-    <string name="select_file">Sélectionner le fichier ZIP</string>
     <string name="installing">Installation en cours...</string>
-    <string name="success">Installation réussie !</string>
-    <string name="error">Erreur lors de l\'installation</string>
+    <string name="success">Installation réussie!</string>
+    <string name="error">Erreur: %s</string>
+    <string name="no_file">Aucun fichier sélectionné</string>
     <string name="choose_file">Choisir un fichier</string>
-    <string name="no_file_selected">Aucun fichier sélectionné</string>
-    <string name="storage_permission_denied">Permission de stockage refusée</string>
-    <string name="install_permission_denied">Permission d\'installation refusée</string>
 </resources>
